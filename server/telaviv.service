@@ -1,0 +1,16 @@
+[Unit]
+Description=TelAviv2030 Server
+After=network.target
+
+[Service]
+Type=simple
+User=akira
+WorkingDirectory=/opt/anni/telaviv
+Environment="NODE_ENV=production"
+EnvironmentFile=/opt/anni/telaviv/.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Chair silhouette -->
+  <path d="M8 24V14H24V24" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M6 14L16 6L26 14" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Flame -->
+  <path d="M16 6V2" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+  <path d="M13 2H19" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+  <!-- Flame tips -->
+  <path d="M14 4L12 1" stroke="#fb923c" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M18 4L20 1" stroke="#fb923c" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

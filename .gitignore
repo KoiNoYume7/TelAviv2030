@@ -1,0 +1,29 @@
+# Build output
+dist/
+
+# Environment
+.env
+.env.local
+
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Database
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# Local workspace
+.ai/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/settings.json
+*.code-workspace

@@ -1,3 +1,6 @@
+import { api } from './api.js'
+import { renderNav } from '../components/nav.js'
+import { renderFooter } from '../components/footer.js'
 import { renderLogin } from '../pages/login.js'
 import { renderPending } from '../pages/pending.js'
 import { renderDashboard } from '../pages/dashboard.js'
@@ -7,37 +10,77 @@ import { renderMembers } from '../pages/members.js'
 import { renderAdmin } from '../pages/admin.js'
 import { renderAgreement } from '../pages/agreement.js'
 
-const routes = {
-  '': renderLogin,
-  'login': renderLogin,
-  'pending': renderPending,
-  'dashboard': renderDashboard,
-  'contribute': renderContribute,
-  'cashout': renderCashout,
-  'members': renderMembers,
-  'admin': renderAdmin,
-  'agreement': renderAgreement
+// Pages without nav/footer (full-screen standalone)
+const STANDALONE = new Set(['pending', 'agreement'])
+
+export function navigate(page, params = {}) {
+  const qs = new URLSearchParams(params).toString()
+  window.location.hash = qs ? `/${page}?${qs}` : `/${page}`
 }
 
 export function initRouter() {
   window.addEventListener('hashchange', handleRoute)
+  window.addEventListener('langchange', handleRoute)
   handleRoute()
 }
 
-function handleRoute() {
-  const hash = window.location.hash.slice(1) || ''
-  const [page, ...params] = hash.split('?')
-  const queryParams = new URLSearchParams(params.join('?'))
-  
-  const renderer = routes[page] || routes['']
-  
-  if (renderer) {
-    renderer(queryParams)
-  }
-}
+async function handleRoute() {
+  // Strip the leading / that hash-based links produce (e.g. #/dashboard → dashboard)
+  const raw = window.location.hash.slice(1).replace(/^\//, '') || ''
+  const [page, ...qparts] = raw.split('?')
+  const params = new URLSearchParams(qparts.join('?'))
 
-export function navigate(page, params = {}) {
-  const queryString = new URLSearchParams(params).toString()
-  const hash = queryString ? `${page}?${queryString}` : page
-  window.location.hash = hash
+  const navRoot    = document.getElementById('nav-root')
+  const footerRoot = document.getElementById('footer-root')
+
+  // Public pages — no auth check
+  if (!page || page === 'login') {
+    navRoot.innerHTML = ''
+    footerRoot.innerHTML = ''
+    renderLogin(params)
+    return
+  }
+
+  // Auth guard — all other pages require a session
+  let user
+  try {
+    user = await api.getMe()
+  } catch {
+    navRoot.innerHTML = ''
+    footerRoot.innerHTML = ''
+    renderLogin(params)
+    return
+  }
+
+  // Flow-based redirects
+  if (user.role === 'pending' && page !== 'pending') {
+    navigate('pending'); return
+  }
+  if (!user.agreement_signed_at && !STANDALONE.has(page)) {
+    navigate('agreement'); return
+  }
+  if (page === 'admin' && user.role !== 'admin') {
+    navigate('dashboard'); return
+  }
+
+  // Standalone pages (pending, agreement) — no nav/footer
+  if (STANDALONE.has(page)) {
+    navRoot.innerHTML = ''
+    footerRoot.innerHTML = ''
+  } else {
+    navRoot.innerHTML = ''
+    navRoot.appendChild(renderNav(user))
+    footerRoot.innerHTML = ''
+    footerRoot.appendChild(renderFooter())
+  }
+
+  switch (page) {
+    case 'pending':    renderPending(user);    break
+    case 'agreement':  renderAgreement(user);  break
+    case 'contribute': renderContribute(user); break
+    case 'cashout':    renderCashout(user);    break
+    case 'members':    renderMembers(user);    break
+    case 'admin':      renderAdmin(user);      break
+    default:           renderDashboard(user)
+  }
 }

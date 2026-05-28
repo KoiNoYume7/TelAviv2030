@@ -124,8 +124,8 @@ router.post('/:id/reject', requireAuth, requireAdmin, (req, res) => {
   res.json({ success: true });
 });
 
-// Get group balance (admin only)
-router.get('/balance/total', requireAuth, requireAdmin, (req, res) => {
+// Get group balance (all members)
+router.get('/balance/total', requireAuth, (req, res) => {
   const result = db.prepare(`
     SELECT COALESCE(SUM(amount_chf), 0) as total
     FROM contributions

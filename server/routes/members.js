@@ -28,9 +28,17 @@ function logAudit(action, actorId, subjectId, amountChf = null, meta = null) {
   stmt.run(action, actorId, subjectId, amountChf, meta);
 }
 
-// Get all members (admin only)
-router.get('/', requireAuth, requireAdmin, (req, res) => {
-  const members = db.prepare('SELECT id, provider, provider_id, name, display_name, email, avatar, role, discord_id, joined_at FROM members ORDER BY joined_at DESC').all();
+// Get members — admin sees everyone (including pending); members see approved only
+router.get('/', requireAuth, (req, res) => {
+  if (req.session.userRole === 'admin') {
+    const members = db.prepare(
+      'SELECT id, provider, name, display_name, email, avatar, role, discord_id, joined_at FROM members ORDER BY joined_at ASC'
+    ).all();
+    return res.json(members);
+  }
+  const members = db.prepare(
+    'SELECT id, provider, name, display_name, avatar, role, joined_at FROM members WHERE role IN (\'member\',\'admin\') ORDER BY joined_at ASC'
+  ).all();
   res.json(members);
 });
 

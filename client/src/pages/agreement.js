@@ -6,7 +6,7 @@ import '../styles/base.css'
 import '../styles/components.css'
 import '../styles/pages.css'
 
-export function renderAgreement() {
+export function renderAgreement(user) {
   const app = document.getElementById('app')
   
   app.innerHTML = `

@@ -5,7 +5,7 @@ import '../styles/base.css'
 import '../styles/components.css'
 import '../styles/pages.css'
 
-export function renderPending() {
+export function renderPending(user) {
   const app = document.getElementById('app')
   
   app.innerHTML = `

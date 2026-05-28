@@ -103,6 +103,8 @@
   "footer.rights": "All rights reserved.",
 
   "common.loading": "Loading...",
+  "common.note": "Optional note...",
+  "common.retry": "Retry",
   "common.error": "An error occurred",
   "common.cancel": "Cancel",
   "common.submit": "Submit",

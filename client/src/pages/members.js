@@ -1,72 +1,71 @@
 import { t } from '../lib/i18n.js'
 import { api } from '../lib/api.js'
 import { formatCHF, formatTier, formatTierClass } from '../lib/format.js'
-import { renderNav } from '../components/nav.js'
-import { renderFooter } from '../components/footer.js'
-import '../styles/base.css'
-import '../styles/components.css'
-import '../styles/pages.css'
 
-export async function renderMembers() {
+export async function renderMembers(user) {
   const app = document.getElementById('app')
-  
+  app.innerHTML = `<div class="container" style="padding:3rem 1rem"><p class="text-muted">${t('common.loading')}</p></div>`
+
   try {
     const members = await api.getMembers()
-    
-    // Get stats for each member
+
+    // Fetch stats for all members in parallel
     const membersWithStats = await Promise.all(
-      members.map(async member => {
+      members.map(async m => {
         try {
-          const stats = await api.getMemberStats(member.id)
-          return { ...member, ...stats }
-        } catch (error) {
-          return { ...member, tier: 'starter', total_contributed: 0 }
+          const stats = await api.getMemberStats(m.id)
+          return { ...m, ...stats }
+        } catch {
+          return { ...m, tier: 'starter', total_contributed: 0 }
         }
       })
     )
-    
+
     app.innerHTML = `
-      ${renderNav().outerHTML}
       <main class="container members-page">
         <div class="dashboard-header reveal">
           <h1>${t('members.title')}</h1>
           <p class="text-muted">${t('members.subtitle')}</p>
         </div>
-        
+
         <div class="members-grid reveal">
-          ${membersWithStats.map(member => `
-            <div class="card member-card">
-              <div class="member-avatar">
-                ${member.name.charAt(0).toUpperCase()}
+          ${membersWithStats.map(m => {
+            const isMe = m.id === user.id
+            return `
+              <div class="card member-card${isMe ? ' member-card--me' : ''}">
+                <div class="member-avatar">
+                  ${m.avatar
+                    ? `<img src="${m.avatar}" alt="${m.display_name || m.name}" class="avatar-img">`
+                    : `<span class="avatar-initials">${(m.display_name || m.name).charAt(0).toUpperCase()}</span>`
+                  }
+                </div>
+                <div class="member-info">
+                  <div class="member-name">
+                    ${m.display_name || m.name}
+                    ${isMe ? '<span class="tag ml-2">You</span>' : ''}
+                  </div>
+                  <span class="badge ${formatTierClass(m.tier)}">${formatTier(m.tier)}</span>
+                </div>
+                ${isMe ? `
+                  <div class="member-stat mono text-muted" style="font-size:0.85rem;margin-top:0.5rem;">
+                    ${formatCHF(m.total_contributed)} contributed
+                  </div>
+                ` : ''}
               </div>
-              <div class="member-info">
-                <div class="member-name">${member.display_name || member.name}</div>
-                <div class="member-role">${member.role}</div>
-              </div>
-              <div class="member-tier">
-                <span class="badge ${formatTierClass(member.tier)}">${formatTier(member.tier)}</span>
-              </div>
-              <div class="mt-2 text-muted" style="font-size: 0.85rem;">
-                ${formatCHF(member.total_contributed)}
-              </div>
-            </div>
-          `).join('')}
+            `
+          }).join('')}
         </div>
       </main>
-      ${renderFooter().outerHTML}
     `
-    
-  } catch (error) {
-    console.error('Members page error:', error)
+  } catch (err) {
+    console.error('Members page error:', err)
     app.innerHTML = `
-      ${renderNav().outerHTML}
-      <main class="container members-page">
+      <main class="container" style="padding-top:3rem">
         <div class="card reveal">
-          <h1>${t('common.error')}</h1>
-          <p class="text-muted">${error.message}</p>
+          <h2>${t('common.error')}</h2>
+          <p class="text-muted mt-2">${err.message}</p>
         </div>
       </main>
-      ${renderFooter().outerHTML}
     `
   }
 }

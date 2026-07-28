@@ -3,6 +3,7 @@ import { Router } from 'express'
 import { getDb } from '../db/db.js'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 import { logEvent } from '../lib/audit.js'
+import { isFrozen } from '../lib/freeze.js'
 
 const router = Router()
 
@@ -46,6 +47,7 @@ function toPublic(row) {
 
 // POST /api/contributions
 router.post('/api/contributions', requireAuth, requireTelAviver, (req, res) => {
+  if (isFrozen('FREEZE_INFLOWS')) return res.status(503).json({ error: 'Contributions are temporarily frozen' })
   const { amount, note } = req.body
   if (typeof amount !== 'number' || amount <= 0) {
     return res.status(400).json({ error: 'amount must be a positive number of rappen' })
@@ -111,6 +113,7 @@ router.patch('/api/contributions/:id', requireAuth, (req, res) => {
 
 // POST /api/donations
 router.post('/api/donations', requireAuth, requireActive, (req, res) => {
+  if (isFrozen('FREEZE_INFLOWS')) return res.status(503).json({ error: 'Donations are temporarily frozen' })
   if (req.member.community_status === 'RETIRED_TELAVIVER' || req.member.community_status === 'RETIRED_TELAVIVLING') {
     return res.status(403).json({ error: 'Retired members cannot donate' })
   }

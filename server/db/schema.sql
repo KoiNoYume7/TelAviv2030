@@ -194,3 +194,18 @@ CREATE TABLE IF NOT EXISTS request_proofs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_request_proofs_request ON request_proofs(request_id);
+
+-- ── System settings (emergency freeze flags, etc.) ──────────────────────────
+CREATE TABLE IF NOT EXISTS system_settings (
+  key         TEXT PRIMARY KEY,
+  value       TEXT NOT NULL DEFAULT 'false',
+  updated_by  TEXT REFERENCES members(id),
+  updated_at  INTEGER DEFAULT (unixepoch())
+);
+
+-- Default emergency flags
+INSERT OR IGNORE INTO system_settings (key, value) VALUES
+  ('FREEZE_REQUESTS', 'false'),
+  ('FREEZE_PAYOUTS', 'false'),
+  ('FREEZE_INFLOWS', 'false'),
+  ('APP_ENV', 'PRODUCTION');

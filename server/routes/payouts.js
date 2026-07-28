@@ -8,6 +8,7 @@ import { getDb } from '../db/db.js'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 import { logEvent } from '../lib/audit.js'
 import { processRequest } from './requests.js'
+import { isFrozen } from '../lib/freeze.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -45,6 +46,7 @@ function canManagePayout(request, member) {
 
 // POST /api/requests/:id/payout/submit
 router.post('/api/requests/:id/payout/submit', requireAuth, (req, res) => {
+  if (isFrozen('FREEZE_PAYOUTS')) return res.status(503).json({ error: 'Payouts are temporarily frozen' })
   const db = getDb()
   const request = processRequest(db, req.params.id)
   if (!request) return res.status(404).json({ error: 'Not found' })

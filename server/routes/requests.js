@@ -3,6 +3,7 @@ import { Router } from 'express'
 import { getDb } from '../db/db.js'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 import { logEvent } from '../lib/audit.js'
+import { isFrozen } from '../lib/freeze.js'
 
 const router = Router()
 
@@ -180,6 +181,8 @@ router.post('/api/requests', requireAuth, requireTelAviver, (req, res) => {
   const { title, description, amount, linked_plan_id } = req.body
   if (!title || typeof title !== 'string') return res.status(400).json({ error: 'title is required' })
   if (typeof amount !== 'number' || amount <= 0) return res.status(400).json({ error: 'amount must be a positive number of rappen' })
+
+  if (isFrozen('FREEZE_REQUESTS')) return res.status(503).json({ error: 'New Requests are temporarily frozen' })
 
   const db = getDb()
   const now = Math.floor(Date.now() / 1000)

@@ -4,6 +4,7 @@
   import Inflows from './pages/Inflows.svelte'
   import Plans from './pages/Plans.svelte'
   import Requests from './pages/Requests.svelte'
+  import Admin from './pages/Admin.svelte'
 
   let page = $state('home')
 </script>
@@ -15,6 +16,7 @@
     <button onclick={() => page = 'inflows'}>Money In</button>
     <button onclick={() => page = 'plans'}>Plans</button>
     <button onclick={() => page = 'requests'}>Requests</button>
+    <button onclick={() => page = 'admin'}>Admin</button>
   </nav>
 
   {#if page === 'home'}
@@ -27,6 +29,8 @@
     <Plans />
   {:else if page === 'requests'}
     <Requests />
+  {:else if page === 'admin'}
+    <Admin />
   {/if}
 </main>
 

@@ -62,10 +62,12 @@ function resolveOrCreateMember(user) {
   if (existing) return existing
 
   const [provider, providerId] = splitProviderId(user.id)
+  const communityStatus = user.community_status || 'TELAVIVLING'
+  const technicalRole = user.technical_role || 'MEMBER'
   db.prepare(`
     INSERT INTO members (id, provider, provider_id, email, name, avatar, community_status, technical_role)
-    VALUES (?, ?, ?, ?, ?, ?, 'TELAVIVLING', 'MEMBER')
-  `).run(user.id, provider, providerId, user.email || null, user.name || 'Unknown', user.avatar || null)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(user.id, provider, providerId, user.email || null, user.name || 'Unknown', user.avatar || null, communityStatus, technicalRole)
 
   const member = db.prepare('SELECT * FROM members WHERE id = ?').get(user.id)
   logEvent({

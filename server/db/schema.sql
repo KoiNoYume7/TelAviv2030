@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS request_votes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_request_votes_request   ON request_votes(request_id);
-CREATE INDEX IF NOT EXISTS idx_request_votes_revision  ON request_revisions(revision_id);
+CREATE INDEX IF NOT EXISTS idx_request_votes_revision  ON request_votes(revision_id);
 CREATE INDEX IF NOT EXISTS idx_request_votes_member    ON request_votes(member_id);
 
 -- ── Request recipients (volunteer / proposal / selection) ───────────────────

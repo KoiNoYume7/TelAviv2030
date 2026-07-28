@@ -15,7 +15,7 @@ export default defineConfig({
         target: 'http://127.0.0.1:4300',
         changeOrigin: true,
         headers: {
-          'x-dev-user': JSON.stringify({ id: 'dev:1', name: 'Dev User', email: 'dev@example.com' })
+          'x-dev-user': JSON.stringify({ id: 'dev:owner', name: 'Dev Owner', email: 'owner@example.com', community_status: 'TELAVIVER', technical_role: 'SYSTEM_OWNER' })
         }
       }
     },

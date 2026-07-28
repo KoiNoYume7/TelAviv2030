@@ -1,4 +1,5 @@
 <script>
+  import Home from './pages/Home.svelte'
   import Members from './pages/Members.svelte'
   import Inflows from './pages/Inflows.svelte'
   import Plans from './pages/Plans.svelte'
@@ -17,10 +18,7 @@
   </nav>
 
   {#if page === 'home'}
-    <section class="home">
-      <h1>TelAviv2030</h1>
-      <p>Trust is the foundation. Software is the accountability layer.</p>
-    </section>
+    <Home />
   {:else if page === 'members'}
     <Members />
   {:else if page === 'inflows'}

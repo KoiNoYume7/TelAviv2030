@@ -9,6 +9,8 @@ import { registerMemberRoutes } from './routes/members.js'
 import { registerInflowRoutes } from './routes/inflows.js'
 import { registerPlanRoutes } from './routes/plans.js'
 import { registerRequestRoutes, processAllRequests } from './routes/requests.js'
+import { registerRecipientRoutes } from './routes/recipients.js'
+import { registerPayoutRoutes } from './routes/payouts.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname  = path.dirname(__filename)
@@ -53,6 +55,8 @@ registerMemberRoutes(app)
 registerInflowRoutes(app)
 registerPlanRoutes(app)
 registerRequestRoutes(app)
+registerRecipientRoutes(app)
+registerPayoutRoutes(app)
 
 // ── Static SPA fallback ──
 app.use(express.static(path.join(__dirname, 'public')))

@@ -33,7 +33,7 @@ function getSettledInflows(db) {
 }
 
 function getCommittedFunds(db) {
-  return db.prepare("SELECT COALESCE(SUM(amount), 0) AS total FROM requests WHERE status IN ('APPROVED_COOLDOWN', 'LOCKED')").get().total
+  return db.prepare("SELECT COALESCE(SUM(amount), 0) AS total FROM requests WHERE status IN ('APPROVED_COOLDOWN','LOCKED','RECIPIENT_SELECTION','RECIPIENT_ACCEPTANCE','PAYOUT_PENDING','PURCHASE_PENDING_PROOF')").get().total
 }
 
 function getAvailableBalance(db) {
@@ -60,34 +60,67 @@ function getVoteSummary(db, requestId, revisionId) {
   return { total, approve, reject, missing: total - approve - reject }
 }
 
-function processRequest(db, requestId) {
-  const req = db.prepare('SELECT * FROM requests WHERE id = ?').get(requestId)
+function ensureCreatorRecipient(db, requestId, creatorId) {
+  const existing = db.prepare('SELECT * FROM request_recipients WHERE request_id = ? AND member_id = ?').get(requestId, creatorId)
+  if (!existing) {
+    db.prepare('INSERT INTO request_recipients (request_id, member_id, status) VALUES (?, ?, ?)')
+      .run(requestId, creatorId, 'VOLUNTEERED')
+  }
+}
+
+export function processRequest(db, requestId) {
+  let req = db.prepare('SELECT * FROM requests WHERE id = ?').get(requestId)
   if (!req) return null
 
-  const now = Math.floor(Date.now() / 1000)
+  let changed = true
+  while (changed) {
+    changed = false
+    const now = Math.floor(Date.now() / 1000)
 
-  if (req.status === 'PENDING_VOTE' && req.expiry_at && req.expiry_at < now) {
-    db.prepare("UPDATE requests SET status = 'EXPIRED', updated_at = ? WHERE id = ?").run(now, requestId)
-    logEvent({ eventType: 'REQUEST_EXPIRED', subjectType: 'request', subjectId: requestId.toString(), payload: {} })
-    return db.prepare('SELECT * FROM requests WHERE id = ?').get(requestId)
-  }
-
-  if (req.status === 'PENDING_VOTE') {
-    const rev = getCurrentRevision(db, requestId)
-    const summary = getVoteSummary(db, requestId, rev.id)
-    if (summary.approve === summary.total && summary.total > 0) {
-      const coolingUntil = now + COOLING_OFF_SECONDS
-      db.prepare("UPDATE requests SET status = 'APPROVED_COOLDOWN', cooling_off_until = ?, updated_at = ? WHERE id = ?")
-        .run(coolingUntil, now, requestId)
-      logEvent({ eventType: 'REQUEST_APPROVED', subjectType: 'request', subjectId: requestId.toString(), payload: { cooling_off_until: coolingUntil } })
-      return db.prepare('SELECT * FROM requests WHERE id = ?').get(requestId)
+    if (req.status === 'PENDING_VOTE' && req.expiry_at && req.expiry_at < now) {
+      db.prepare("UPDATE requests SET status = 'EXPIRED', updated_at = ? WHERE id = ?").run(now, requestId)
+      logEvent({ eventType: 'REQUEST_EXPIRED', subjectType: 'request', subjectId: requestId.toString(), payload: {} })
+      changed = true
+    } else if (req.status === 'PENDING_VOTE') {
+      const rev = getCurrentRevision(db, requestId)
+      const summary = getVoteSummary(db, requestId, rev.id)
+      if (summary.approve === summary.total && summary.total > 0) {
+        const coolingUntil = now + COOLING_OFF_SECONDS
+        db.prepare("UPDATE requests SET status = 'APPROVED_COOLDOWN', cooling_off_until = ?, updated_at = ? WHERE id = ?")
+          .run(coolingUntil, now, requestId)
+        logEvent({ eventType: 'REQUEST_APPROVED', subjectType: 'request', subjectId: requestId.toString(), payload: { cooling_off_until: coolingUntil } })
+        changed = true
+      }
+    } else if (req.status === 'APPROVED_COOLDOWN' && req.cooling_off_until && req.cooling_off_until < now) {
+      db.prepare("UPDATE requests SET status = 'LOCKED', locked_at = ?, updated_at = ? WHERE id = ?").run(now, now, requestId)
+      logEvent({ eventType: 'REQUEST_LOCKED', subjectType: 'request', subjectId: requestId.toString(), payload: {} })
+      changed = true
+    } else if (req.status === 'LOCKED' && !req.selected_recipient_id) {
+      ensureCreatorRecipient(db, req.id, req.created_by)
+      db.prepare("UPDATE requests SET status = 'RECIPIENT_SELECTION', updated_at = ? WHERE id = ?").run(now, requestId)
+      logEvent({ eventType: 'REQUEST_RECIPIENT_SELECTION', subjectType: 'request', subjectId: requestId.toString(), payload: {} })
+      changed = true
+    } else if (req.status === 'RECIPIENT_SELECTION') {
+      const proposal = db.prepare("SELECT * FROM request_recipients WHERE request_id = ? AND status = 'PROPOSED' AND proposal_expires_at < ? AND objections = 0").get(requestId, now)
+      if (proposal) {
+        db.prepare("UPDATE request_recipients SET status = 'SELECTED' WHERE id = ?").run(proposal.id)
+        db.prepare("UPDATE requests SET status = 'RECIPIENT_ACCEPTANCE', selected_recipient_id = ?, updated_at = ? WHERE id = ?")
+          .run(proposal.member_id, now, requestId)
+        logEvent({
+          eventType: 'REQUEST_RECIPIENT_SELECTED',
+          subjectType: 'request',
+          subjectId: requestId.toString(),
+          payload: { recipient_id: proposal.member_id },
+        })
+        changed = true
+      }
+    } else if (req.status === 'PAYOUT_PENDING' && req.payout_status === 'SETTLED') {
+      db.prepare("UPDATE requests SET status = 'PURCHASE_PENDING_PROOF', updated_at = ? WHERE id = ?").run(now, requestId)
+      logEvent({ eventType: 'REQUEST_PURCHASE_PENDING_PROOF', subjectType: 'request', subjectId: requestId.toString(), payload: {} })
+      changed = true
     }
-  }
 
-  if (req.status === 'APPROVED_COOLDOWN' && req.cooling_off_until && req.cooling_off_until < now) {
-    db.prepare("UPDATE requests SET status = 'LOCKED', locked_at = ?, updated_at = ? WHERE id = ?").run(now, now, requestId)
-    logEvent({ eventType: 'REQUEST_LOCKED', subjectType: 'request', subjectId: requestId.toString(), payload: {} })
-    return db.prepare('SELECT * FROM requests WHERE id = ?').get(requestId)
+    if (changed) req = db.prepare('SELECT * FROM requests WHERE id = ?').get(requestId)
   }
 
   return req

@@ -18,6 +18,9 @@ dist/
 logs/
 *.log
 
+# ── Uploads ──
+uploads/
+
 # ── Local workspace ──
 .ai/
 

@@ -7,6 +7,8 @@
   let title = $state('')
   let description = $state('')
   let amount = $state('')
+  let payoutReference = $state('')
+  let payoutReason = $state('')
   let error = $state('')
 
   onMount(async () => {
@@ -32,6 +34,10 @@
 
   function isTelAviver() {
     return me?.community_status === 'TELAVIVER'
+  }
+
+  function isAdmin() {
+    return ['SYSTEM_ADMIN', 'SYSTEM_OWNER'].includes(me?.technical_role)
   }
 
   async function submitRequest() {
@@ -64,11 +70,106 @@
     }
   }
 
+  async function volunteer(req) {
+    try {
+      await postJson(`/requests/${req.id}/recipients`, {})
+      await load()
+    } catch (err) {
+      error = err.message
+    }
+  }
+
+  async function propose(req, memberId) {
+    try {
+      await postJson(`/requests/${req.id}/recipients/${memberId}/propose`, {})
+      await load()
+    } catch (err) {
+      error = err.message
+    }
+  }
+
+  async function object(req, memberId) {
+    try {
+      await postJson(`/requests/${req.id}/recipients/${memberId}/object`, {})
+      await load()
+    } catch (err) {
+      error = err.message
+    }
+  }
+
+  async function accept(req) {
+    try {
+      await postJson(`/requests/${req.id}/recipient/accept`, {})
+      await load()
+    } catch (err) {
+      error = err.message
+    }
+  }
+
+  async function decline(req) {
+    try {
+      await postJson(`/requests/${req.id}/recipient/decline`, {})
+      await load()
+    } catch (err) {
+      error = err.message
+    }
+  }
+
+  async function submitPayout(req) {
+    try {
+      await postJson(`/requests/${req.id}/payout/submit`, { reference: payoutReference })
+      payoutReference = ''
+      await load()
+    } catch (err) {
+      error = err.message
+    }
+  }
+
+  async function updatePayoutStatus(req) {
+    try {
+      await patchJson(`/requests/${req.id}/payout/status`, { status: req._payoutStatus, reason: payoutReason })
+      payoutReason = ''
+      req._payoutStatus = ''
+      await load()
+    } catch (err) {
+      error = err.message
+    }
+  }
+
+  async function complete(req) {
+    try {
+      await postJson(`/requests/${req.id}/complete`, {})
+      await load()
+    } catch (err) {
+      error = err.message
+    }
+  }
+
+  async function uploadProof(req) {
+    const input = document.getElementById(`proof-${req.id}`)
+    if (!input?.files?.[0]) return
+    const form = new FormData()
+    form.append('file', input.files[0])
+    try {
+      const res = await fetch(`/api/requests/${req.id}/proofs`, { method: 'POST', body: form, credentials: 'include' })
+      if (!res.ok) throw new Error((await res.json()).error || 'Upload failed')
+      input.value = ''
+      await load()
+    } catch (err) {
+      error = err.message
+    }
+  }
+
   function statusColor(status) {
     return {
       PENDING_VOTE: '#a2f',
       APPROVED_COOLDOWN: '#fa2',
       LOCKED: '#2a5',
+      RECIPIENT_SELECTION: '#29f',
+      RECIPIENT_ACCEPTANCE: '#f82',
+      PAYOUT_PENDING: '#f82',
+      PURCHASE_PENDING_PROOF: '#fa2',
+      COMPLETED: '#2a5',
       CANCELLED: '#666',
       EXPIRED: '#666',
     }[status] || '#444'
@@ -111,11 +212,14 @@
         {#if req.description}
           <p class="desc">{req.description}</p>
         {/if}
-        <p class="meta">
-          Votes: {req.vote_summary.approve} / {req.vote_summary.total} approve,
-          {req.vote_summary.reject} reject,
-          {req.vote_summary.missing} missing
-        </p>
+        {#if req.status === 'PENDING_VOTE'}
+          <p class="meta">
+            Votes: {req.vote_summary.approve} / {req.vote_summary.total} approve,
+            {req.vote_summary.reject} reject,
+            {req.vote_summary.missing} missing
+          </p>
+        {/if}
+
         {#if req.status === 'PENDING_VOTE' && isTelAviver()}
           <div class="actions">
             <button onclick={() => vote(req, 'APPROVE')}>Approve</button>
@@ -125,8 +229,59 @@
             {/if}
           </div>
         {/if}
-        {#if req.cooling_off_until && req.status === 'APPROVED_COOLDOWN'}
+
+        {#if req.status === 'APPROVED_COOLDOWN' && req.cooling_off_until}
           <p class="meta">Cooling-off until {new Date(req.cooling_off_until * 1000).toLocaleString()}</p>
+        {/if}
+
+        {#if req.status === 'RECIPIENT_SELECTION' && isTelAviver()}
+          <div class="actions">
+            <button onclick={() => volunteer(req)}>I can handle this purchase</button>
+          </div>
+          <!-- Recipients list loaded on demand not shown for brevity; proposal is stubbed below -->
+          {#if req.created_by === me?.id || isAdmin()}
+            <p class="meta">Recipient selection requires backend proposal flow (volunteer above, then propose).</p>
+          {/if}
+        {/if}
+
+        {#if req.status === 'RECIPIENT_ACCEPTANCE' && req.selected_recipient_id === me?.id}
+          <div class="actions">
+            <button onclick={() => accept(req)}>Accept payout</button>
+            <button class="danger" onclick={() => decline(req)}>Decline</button>
+          </div>
+        {/if}
+
+        {#if req.status === 'PAYOUT_PENDING' && (req.selected_recipient_id === me?.id || isAdmin())}
+          <div class="actions">
+            <input type="text" placeholder="Bank reference (optional)" bind:value={payoutReference} />
+            <button onclick={() => submitPayout(req)}>Submit payout</button>
+          </div>
+        {/if}
+
+        {#if req.status === 'PAYOUT_PENDING' && isAdmin()}
+          <div class="actions">
+            <select bind:value={req._payoutStatus}>
+              <option value="">Update payout status</option>
+              <option value="PENDING">Pending</option>
+              <option value="SETTLED">Settled</option>
+              <option value="FAILED">Failed</option>
+              <option value="REQUIRES_REVIEW">Requires review</option>
+            </select>
+            <input type="text" placeholder="Reason" bind:value={payoutReason} />
+            <button onclick={() => updatePayoutStatus(req)}>Update</button>
+          </div>
+        {/if}
+
+        {#if req.status === 'PURCHASE_PENDING_PROOF' && (req.selected_recipient_id === me?.id || isAdmin())}
+          <div class="actions">
+            <input type="file" id="proof-{req.id}" accept="image/*,application/pdf" />
+            <button onclick={() => uploadProof(req)}>Upload proof</button>
+            <button onclick={() => complete(req)}>Mark completed</button>
+          </div>
+        {/if}
+
+        {#if req.payout_status && req.payout_status !== 'NOT_STARTED'}
+          <p class="meta">Payout: {req.payout_status}</p>
         {/if}
       </li>
     {/each}
@@ -152,7 +307,7 @@
     flex-direction: column;
     gap: 0.25rem;
   }
-  input, textarea {
+  input, textarea, select {
     padding: 0.5rem;
     border: 1px solid #555;
     background: #222;
@@ -210,7 +365,9 @@
   }
   .actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
     margin-top: 0.75rem;
+    align-items: center;
   }
 </style>

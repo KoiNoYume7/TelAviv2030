@@ -73,3 +73,21 @@ CREATE TABLE IF NOT EXISTS donations (
 
 CREATE INDEX IF NOT EXISTS idx_donations_member_id ON donations(member_id);
 CREATE INDEX IF NOT EXISTS idx_donations_status    ON donations(status);
+
+-- ── Plans (fundraising goals / savings targets) ─────────────────────────────
+CREATE TABLE IF NOT EXISTS plans (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  name           TEXT NOT NULL,
+  description    TEXT,
+  target_amount  INTEGER,
+  current_amount INTEGER NOT NULL DEFAULT 0,
+  target_date    INTEGER,
+  status         TEXT NOT NULL DEFAULT 'ACTIVE'
+    CHECK (status IN ('ACTIVE', 'COMPLETED', 'CANCELLED')),
+  created_by     TEXT NOT NULL REFERENCES members(id),
+  created_at     INTEGER DEFAULT (unixepoch()),
+  updated_at     INTEGER DEFAULT (unixepoch())
+);
+
+CREATE INDEX IF NOT EXISTS idx_plans_status     ON plans(status);
+CREATE INDEX IF NOT EXISTS idx_plans_created_by ON plans(created_by);

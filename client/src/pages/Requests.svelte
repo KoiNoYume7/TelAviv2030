@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import { getJson, postJson, patchJson, del } from '../lib/api.js'
+  import { getJson, postJson, patchJson, del, postFile } from '../lib/api.js'
 
   let me = $state(null)
   let requests = $state([])
@@ -151,8 +151,7 @@
     const form = new FormData()
     form.append('file', input.files[0])
     try {
-      const res = await fetch(`/api/requests/${req.id}/proofs`, { method: 'POST', body: form, credentials: 'include' })
-      if (!res.ok) throw new Error((await res.json()).error || 'Upload failed')
+      await postFile(`/requests/${req.id}/proofs`, form)
       input.value = ''
       await load()
     } catch (err) {

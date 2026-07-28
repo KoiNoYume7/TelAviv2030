@@ -21,6 +21,13 @@ logs/
 # ── Uploads ──
 uploads/
 
+# ── Mobile build output ──
+client/android/.gradle/
+client/android/build/
+client/android/app/build/
+client/android/local.properties
+client/android/app/src/main/assets/public/
+
 # ── Local workspace ──
 .ai/
 

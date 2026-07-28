@@ -1,0 +1,16 @@
+{
+  "appId": "com.telaviv2030.app",
+  "appName": "TelAviv2030",
+  "webDir": "../dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "hostname": "localhost"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#111111"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+[Unit]
+Description=TelAviv2030 group finance app
+After=network.target
+
+[Service]
+Type=simple
+User=akira
+WorkingDirectory=/opt/anni/telaviv
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/anni/telaviv/.env
+
+[Install]
+WantedBy=multi-user.target

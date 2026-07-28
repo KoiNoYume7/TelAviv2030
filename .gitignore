@@ -27,7 +27,6 @@ Thumbs.db
 
 # ── Editors ──
 .vscode/settings.json
-*.code-workspace
 
 # ── Trash ──
 .trash/

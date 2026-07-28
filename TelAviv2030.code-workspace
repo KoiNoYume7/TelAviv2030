@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"name": "TelAviv2030 (main)",
+			"path": "."
+		},
+		{
+			"name": "TelAviv2030 (backup)",
+			"path": "../TelAviv2030.bak"
+		}
+	],
+	"extensions": {
+		"recommendations": [
+			"starlitxiling.bak-syntax-highlighter"
+		]
+	},
+	"settings": {
+		"files.exclude": {
+			"**/.git": false
+		},
+		"workbench.startupEditor": "readme",
+		"workbench.editor.restoreViewState": true,
+		"powershell.cwd": "TelAviv2030 (main)"
+	}
+}

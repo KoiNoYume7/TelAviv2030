@@ -3,7 +3,8 @@ PRAGMA foreign_keys = ON;
 -- ── Members ───────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS members (
   id               TEXT PRIMARY KEY,
-  google_id        TEXT UNIQUE NOT NULL,
+  provider         TEXT NOT NULL,
+  provider_id      TEXT NOT NULL,
   email            TEXT NOT NULL,
   name             TEXT NOT NULL,
   avatar           TEXT,
@@ -15,8 +16,9 @@ CREATE TABLE IF NOT EXISTS members (
   updated_at       INTEGER DEFAULT (unixepoch())
 );
 
-CREATE INDEX IF NOT EXISTS idx_members_status ON members(community_status);
-CREATE INDEX IF NOT EXISTS idx_members_role   ON members(technical_role);
+CREATE INDEX IF NOT EXISTS idx_members_provider ON members(provider, provider_id);
+CREATE INDEX IF NOT EXISTS idx_members_status   ON members(community_status);
+CREATE INDEX IF NOT EXISTS idx_members_role     ON members(technical_role);
 
 -- ── Audit log (append-only, hash-chained) ───────────────────────────────────
 CREATE TABLE IF NOT EXISTS audit_events (

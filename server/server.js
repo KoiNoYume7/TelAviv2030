@@ -5,7 +5,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { getDb } from './db/db.js'
-import { requireAuth } from './middleware/auth.js'
+import { registerMemberRoutes } from './routes/members.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname  = path.dirname(__filename)
@@ -45,10 +45,8 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'telaviv2030', env: process.env.APP_ENV || 'PRODUCTION', ts: Date.now() })
 })
 
-// ── Protected routes ──
-app.get('/api/me', requireAuth, (req, res) => {
-  res.json({ ok: true, user: req.user })
-})
+// ── Routes ──
+registerMemberRoutes(app)
 
 // ── Static SPA fallback ──
 app.use(express.static(path.join(__dirname, 'public')))

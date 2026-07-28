@@ -29,6 +29,8 @@ app.use(express.json())
 // ── CORS (hand-rolled allowlist) ──
 const ALLOWED_ORIGINS = new Set([
   'https://telaviv.yumehana.dev',
+  'https://localhost',
+  'capacitor://localhost',
   ...(DEV_MODE ? ['http://localhost:5173', 'http://localhost:4300'] : [])
 ])
 

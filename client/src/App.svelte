@@ -1,5 +1,6 @@
 <script>
   import Members from './pages/Members.svelte'
+  import Inflows from './pages/Inflows.svelte'
 
   let page = $state('home')
 </script>
@@ -8,6 +9,7 @@
   <nav>
     <button onclick={() => page = 'home'}>Home</button>
     <button onclick={() => page = 'members'}>Members</button>
+    <button onclick={() => page = 'inflows'}>Money In</button>
   </nav>
 
   {#if page === 'home'}
@@ -17,6 +19,8 @@
     </section>
   {:else if page === 'members'}
     <Members />
+  {:else if page === 'inflows'}
+    <Inflows />
   {/if}
 </main>
 

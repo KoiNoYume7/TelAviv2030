@@ -39,3 +39,37 @@ CREATE INDEX IF NOT EXISTS idx_audit_events_type     ON audit_events(event_type)
 CREATE INDEX IF NOT EXISTS idx_audit_events_actor    ON audit_events(actor_id);
 CREATE INDEX IF NOT EXISTS idx_audit_events_subject  ON audit_events(subject_type, subject_id);
 CREATE INDEX IF NOT EXISTS idx_audit_events_created  ON audit_events(created_at);
+
+-- ── Contributions (money in from TelAvivers) ────────────────────────────────
+CREATE TABLE IF NOT EXISTS contributions (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  member_id   TEXT NOT NULL REFERENCES members(id),
+  amount      INTEGER NOT NULL,            -- smallest currency unit, e.g. rappen
+  currency    TEXT NOT NULL DEFAULT 'CHF',
+  note        TEXT,
+  status      TEXT NOT NULL DEFAULT 'PENDING'
+    CHECK (status IN ('PENDING', 'SETTLED', 'CANCELLED')),
+  settled_by  TEXT REFERENCES members(id),
+  settled_at  INTEGER,
+  created_at  INTEGER DEFAULT (unixepoch())
+);
+
+CREATE INDEX IF NOT EXISTS idx_contributions_member_id ON contributions(member_id);
+CREATE INDEX IF NOT EXISTS idx_contributions_status    ON contributions(status);
+
+-- ── Donations (money in from TelAvivlings) ────────────────────────────────────
+CREATE TABLE IF NOT EXISTS donations (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  member_id   TEXT NOT NULL REFERENCES members(id),
+  amount      INTEGER NOT NULL,            -- smallest currency unit, e.g. rappen
+  currency    TEXT NOT NULL DEFAULT 'CHF',
+  note        TEXT,
+  status      TEXT NOT NULL DEFAULT 'PENDING'
+    CHECK (status IN ('PENDING', 'SETTLED', 'CANCELLED')),
+  settled_by  TEXT REFERENCES members(id),
+  settled_at  INTEGER,
+  created_at  INTEGER DEFAULT (unixepoch())
+);
+
+CREATE INDEX IF NOT EXISTS idx_donations_member_id ON donations(member_id);
+CREATE INDEX IF NOT EXISTS idx_donations_status    ON donations(status);

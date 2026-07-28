@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 
 import { getDb } from './db/db.js'
 import { registerMemberRoutes } from './routes/members.js'
+import { registerInflowRoutes } from './routes/inflows.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname  = path.dirname(__filename)
@@ -47,6 +48,7 @@ app.get('/api/health', (req, res) => {
 
 // ── Routes ──
 registerMemberRoutes(app)
+registerInflowRoutes(app)
 
 // ── Static SPA fallback ──
 app.use(express.static(path.join(__dirname, 'public')))

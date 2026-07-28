@@ -9,6 +9,17 @@ const router = Router()
 const VALID_STATUS = ['TELAVIVER', 'TELAVIVLING', 'RETIRED_TELAVIVER', 'RETIRED_TELAVIVLING']
 const VALID_ROLES  = ['MEMBER', 'SYSTEM_ADMIN', 'SYSTEM_OWNER']
 
+// GET /api/me
+router.get('/api/me', requireAuth, (req, res) => {
+  res.json({
+    id:               req.member.id,
+    name:             req.member.name,
+    avatar:           req.member.avatar,
+    community_status: req.member.community_status,
+    technical_role:   req.member.technical_role,
+  })
+})
+
 function toPublicMember(row) {
   return {
     id:               row.id,

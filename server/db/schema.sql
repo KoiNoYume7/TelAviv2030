@@ -91,3 +91,62 @@ CREATE TABLE IF NOT EXISTS plans (
 
 CREATE INDEX IF NOT EXISTS idx_plans_status     ON plans(status);
 CREATE INDEX IF NOT EXISTS idx_plans_created_by ON plans(created_by);
+
+-- ── Requests (group spending proposals) ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS requests (
+  id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+  title                TEXT NOT NULL,
+  description          TEXT,
+  amount               INTEGER NOT NULL,            -- smallest currency unit, e.g. rappen
+  currency             TEXT NOT NULL DEFAULT 'CHF',
+  status               TEXT NOT NULL DEFAULT 'PENDING_VOTE'
+    CHECK (status IN ('PENDING_VOTE', 'APPROVED_COOLDOWN', 'LOCKED', 'CANCELLED', 'EXPIRED')),
+  created_by           TEXT NOT NULL REFERENCES members(id),
+  current_revision     INTEGER NOT NULL DEFAULT 1,
+  expiry_at            INTEGER,
+  cooling_off_until    INTEGER,
+  locked_at            INTEGER,
+  selected_recipient_id TEXT REFERENCES members(id),
+  payout_status        TEXT NOT NULL DEFAULT 'NOT_STARTED'
+    CHECK (payout_status IN ('NOT_STARTED', 'SUBMITTED', 'PENDING', 'SETTLED', 'FAILED', 'CANCELLED', 'REQUIRES_REVIEW')),
+  linked_plan_id       INTEGER REFERENCES plans(id),
+  created_at           INTEGER DEFAULT (unixepoch()),
+  updated_at           INTEGER DEFAULT (unixepoch())
+);
+
+CREATE INDEX IF NOT EXISTS idx_requests_status      ON requests(status);
+CREATE INDEX IF NOT EXISTS idx_requests_created_by  ON requests(created_by);
+CREATE INDEX IF NOT EXISTS idx_requests_expiry      ON requests(expiry_at);
+
+-- ── Request revisions (immutable snapshots for material edits) ──────────────
+CREATE TABLE IF NOT EXISTS request_revisions (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  request_id      INTEGER NOT NULL REFERENCES requests(id),
+  revision_number INTEGER NOT NULL,
+  title           TEXT NOT NULL,
+  description     TEXT,
+  amount          INTEGER NOT NULL,
+  currency        TEXT NOT NULL DEFAULT 'CHF',
+  reason          TEXT,
+  created_by      TEXT NOT NULL REFERENCES members(id),
+  created_at      INTEGER DEFAULT (unixepoch()),
+  UNIQUE(request_id, revision_number)
+);
+
+CREATE INDEX IF NOT EXISTS idx_request_revisions_request ON request_revisions(request_id);
+
+-- ── Request votes (per revision) ──────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS request_votes (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  request_id    INTEGER NOT NULL REFERENCES requests(id),
+  revision_id   INTEGER NOT NULL REFERENCES request_revisions(id),
+  member_id     TEXT NOT NULL REFERENCES members(id),
+  vote          TEXT NOT NULL CHECK (vote IN ('APPROVE', 'REJECT')),
+  created_at    INTEGER DEFAULT (unixepoch()),
+  updated_at    INTEGER DEFAULT (unixepoch()),
+  UNIQUE(request_id, revision_id, member_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_request_votes_request   ON request_votes(request_id);
+CREATE INDEX IF NOT EXISTS idx_request_votes_revision  ON request_votes(revision_id);
+CREATE INDEX IF NOT EXISTS idx_request_votes_member    ON request_votes(member_id);

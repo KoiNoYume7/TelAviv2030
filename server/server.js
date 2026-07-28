@@ -8,6 +8,7 @@ import { getDb } from './db/db.js'
 import { registerMemberRoutes } from './routes/members.js'
 import { registerInflowRoutes } from './routes/inflows.js'
 import { registerPlanRoutes } from './routes/plans.js'
+import { registerRequestRoutes, processAllRequests } from './routes/requests.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname  = path.dirname(__filename)
@@ -51,6 +52,7 @@ app.get('/api/health', (req, res) => {
 registerMemberRoutes(app)
 registerInflowRoutes(app)
 registerPlanRoutes(app)
+registerRequestRoutes(app)
 
 // ── Static SPA fallback ──
 app.use(express.static(path.join(__dirname, 'public')))
@@ -71,6 +73,10 @@ app.use((err, req, res, next) => {
 
 // ── Database ──
 getDb()
+
+// ── Periodic state transitions ──
+processAllRequests()
+setInterval(processAllRequests, 60_000)
 
 // ── Listen ──
 app.listen(PORT, '127.0.0.1', () => {

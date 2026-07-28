@@ -18,3 +18,4 @@ async function api(method, path, body) {
 export const getJson = (path) => api('GET', path)
 export const postJson = (path, body) => api('POST', path, body)
 export const patchJson = (path, body) => api('PATCH', path, body)
+export const del = (path) => api('DELETE', path)

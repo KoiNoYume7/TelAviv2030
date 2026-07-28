@@ -1,0 +1,33 @@
+# ── Node ──
+node_modules/
+npm-debug.log*
+
+# ── Build output ──
+dist/
+
+# ── Environment ──
+.env
+.env.local
+
+# ── Database ──
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# ── Logs ──
+logs/
+*.log
+
+# ── Local workspace ──
+.ai/
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+
+# ── Editors ──
+.vscode/settings.json
+*.code-workspace
+
+# ── Trash ──
+.trash/

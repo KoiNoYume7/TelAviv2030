@@ -82,8 +82,8 @@
 
 - Recipient volunteer / enrollment
 - Recipient eligibility: active TelAviver, approved the Request, explicitly volunteered
-- Recipient selection by consensus; highest vote count does not automatically win
-- Short configurable recipient-selection window (approximately 30–60 minutes by default, with a 24-hour maximum/finalization cap where applicable, and capped by Request expiry)
+- Recipient selection by proposal-with-objection: an eligible TelAviver proposes a recipient; if no one objects within a short window, that recipient is selected
+- Short configurable recipient-selection window (approximately 30–60 minutes by default, capped by Request expiry)
 - Explicit recipient acceptance before payout
 - Recipient decline and retry
 - Payout state machine (`NOT_STARTED`, `SUBMITTED`, `PENDING`, `SETTLED`, `FAILED`, `CANCELLED`, `REQUIRES_REVIEW`)

@@ -68,7 +68,8 @@ TelAvivlings are part of the community but have restricted V1 access:
 - After locking, eligible TelAvivers volunteer to be recipients.
 - Eligibility: active TelAviver, approved the Request, explicitly volunteered, not excluded by a relevant system rule.
 - The group must converge on exactly one recipient; the highest vote count does not automatically win.
-- Recipient selection should resolve as quickly as the group agrees; a short configurable window (approximately 30–60 minutes by default, with a 24-hour maximum/finalization cap where applicable) may be used, capped by Request expiry.
+- Recipient selection uses a **proposal-with-objection** model: any eligible TelAviver proposes a recipient (themselves or another eligible volunteer). If no one objects within a short configurable window (approximately 30–60 minutes by default, capped by Request expiry), the proposed recipient is selected.
+- An objection rejects the current proposal and the process restarts with a new proposal.
 - The selected recipient must explicitly accept the payout before any money is sent.
 - Payout states include at least: `NOT_STARTED`, `SUBMITTED`, `PENDING`, `SETTLED`, `FAILED`, `CANCELLED`, `REQUIRES_REVIEW`.
 - The application tracks internal expected state and reconciles against the bank; the bank is authoritative for actual money movement.
